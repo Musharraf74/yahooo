@@ -1,136 +1,145 @@
-/**
- * DigitalPro Agency - Modern JavaScript Enhancements
- * Handles:
- * 1. Mobile navigation menu toggle
- * 2. Intersection Observer for Scroll Reveal animations
- * 3. Sticky header background opacity
- * 4. Form submission simulation
- */
+﻿document.addEventListener('DOMContentLoaded', function () {
+  /* =========================
+     1) Grab page elements
+  ========================== */
+  const mobileMenuButton = document.getElementById('mobile-menu');
+  const navLinksBox = document.getElementById('nav-links');
+  const header = document.querySelector('.header');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  const allAnchorLinks = document.querySelectorAll('a[href^="#"]');
+  const revealItems = document.querySelectorAll('.reveal');
+  const pageSections = document.querySelectorAll('section[id]');
+  const contactForm = document.getElementById('contact-form');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- 1. Mobile Menu Toggle Logic ---
-    const menuToggle = document.getElementById('mobile-menu');
-    const navLinks = document.getElementById('nav-links');
+  /* =========================
+     2) Mobile menu helpers
+  ========================== */
+  function setHamburgerIcon(isOpen) {
+    if (!mobileMenuButton) return;
 
-    if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            // Toggle the 'active' class on both menu and nav container
-            navLinks.classList.toggle('active');
-            menuToggle.classList.toggle('is-active');
-            
-            // Basic animation for hamburger bars
-            const bars = menuToggle.querySelectorAll('.bar');
-            if (navLinks.classList.contains('active')) {
-                bars[0].style.transform = 'rotate(-45deg) translate(-5px, 6px)';
-                bars[1].style.opacity = '0';
-                bars[2].style.transform = 'rotate(45deg) translate(-5px, -6px)';
-            } else {
-                bars[0].style.transform = 'none';
-                bars[1].style.opacity = '1';
-                bars[2].style.transform = 'none';
-            }
-        });
+    const bars = mobileMenuButton.querySelectorAll('.bar');
+    if (bars.length < 3) return;
+
+    bars[0].style.transform = isOpen ? 'rotate(-45deg) translate(-5px, 6px)' : 'none';
+    bars[1].style.opacity = isOpen ? '0' : '1';
+    bars[2].style.transform = isOpen ? 'rotate(45deg) translate(-5px, -6px)' : 'none';
+  }
+
+  function closeMobileMenu() {
+    if (!navLinksBox) return;
+
+    navLinksBox.classList.remove('active');
+    if (mobileMenuButton) {
+      mobileMenuButton.classList.remove('is-active');
     }
+    setHamburgerIcon(false);
+  }
 
-    // Close mobile menu when any link is clicked
-    const navItems = document.querySelectorAll('.nav-links a');
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            if (navLinks.classList.contains('active')) {
-                navLinks.classList.remove('active');
-                // Reset bars
-                const bars = menuToggle.querySelectorAll('.bar');
-                bars[0].style.transform = 'none';
-                bars[1].style.opacity = '1';
-                bars[2].style.transform = 'none';
-            }
-        });
+  function toggleMobileMenu() {
+    if (!mobileMenuButton || !navLinksBox) return;
+
+    const isOpen = navLinksBox.classList.toggle('active');
+    mobileMenuButton.classList.toggle('is-active', isOpen);
+    setHamburgerIcon(isOpen);
+  }
+
+  if (mobileMenuButton && navLinksBox) {
+    mobileMenuButton.addEventListener('click', toggleMobileMenu);
+  }
+
+  /* =========================
+     3) Smooth scroll for #links
+  ========================== */
+  allAnchorLinks.forEach(function (link) {
+    link.addEventListener('click', function (event) {
+      const targetId = link.getAttribute('href');
+      if (!targetId || targetId === '#') return;
+
+      const targetSection = document.querySelector(targetId);
+      if (!targetSection) return;
+
+      event.preventDefault();
+
+      const headerHeight = header ? header.offsetHeight : 0;
+      const targetTop = targetSection.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+
+      window.scrollTo({
+        top: targetTop,
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+
+      closeMobileMenu();
+    });
+  });
+
+  /* =========================
+     4) Scroll based updates
+  ========================== */
+  function runRevealAnimation() {
+    revealItems.forEach(function (item) {
+      const triggerPoint = window.innerHeight - 150;
+      if (item.getBoundingClientRect().top < triggerPoint) {
+        item.classList.add('active');
+      }
+    });
+  }
+
+  function updateHeaderStyle() {
+    if (!header) return;
+
+    const scrolled = window.scrollY > 50;
+    header.style.padding = scrolled ? '5px 0' : '0';
+    header.style.backgroundColor = scrolled ? 'rgba(10, 25, 47, 0.98)' : 'rgba(10, 25, 47, 0.85)';
+  }
+
+  function updateActiveNavLink() {
+    let currentSectionId = '';
+    const pageY = window.pageYOffset;
+
+    pageSections.forEach(function (section) {
+      if (pageY >= section.offsetTop - 150) {
+        currentSectionId = section.id;
+      }
     });
 
-    // --- 2. Scroll Reveal Animation Logic ---
-    // This function checks if elements are in the viewport as you scroll
-    const revealElements = () => {
-        const reveals = document.querySelectorAll('.reveal');
-        
-        for (let i = 0; i < reveals.length; i++) {
-            const windowHeight = window.innerHeight;
-            const elementTop = reveals[i].getBoundingClientRect().top;
-            const elementVisible = 150; // Delay before triggering
-            
-            if (elementTop < windowHeight - elementVisible) {
-                reveals[i].classList.add('active');
-            } else {
-                // Optional: remove class to replay animation when scrolling back up
-                // reveals[i].classList.remove('active');
-            }
-        }
-    };
-
-    // Trigger reveal function on scroll
-    window.addEventListener('scroll', revealElements);
-    
-    // Trigger once on load to show elements already in view (like Hero)
-    revealElements();
-
-    // --- 3. Header Scroll Effect ---
-    // Changes header styling based on scroll depth
-    const header = document.querySelector('.header');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            header.style.padding = '5px 0';
-            header.style.backgroundColor = 'rgba(10, 25, 47, 0.98)';
-        } else {
-            header.style.padding = '0';
-            header.style.backgroundColor = 'rgba(10, 25, 47, 0.85)';
-        }
+    navLinks.forEach(function (link) {
+      const linkTarget = link.getAttribute('href');
+      const shouldBeActive = currentSectionId && linkTarget === '#' + currentSectionId;
+      link.classList.toggle('active', shouldBeActive);
     });
+  }
 
-    // --- 4. Simple Form Submission Handling ---
-    const contactForm = document.getElementById('contact-form');
-    
-    if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
+  function handleScroll() {
+    runRevealAnimation();
+    updateHeaderStyle();
+    updateActiveNavLink();
+  }
 
-            // Simple validation feedback
-            const submitBtn = contactForm.querySelector('.btn-submit');
-            const originalText = submitBtn.innerText;
-            
-            submitBtn.innerText = 'Sending...';
-            submitBtn.disabled = true;
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  handleScroll();
 
-            // Simulate server delay
-            setTimeout(() => {
-                const name = document.getElementById('name').value;
-                alert(`Success! Thank you, ${name}. We have received your message and will contact you shortly.`);
-                
-                // Reset form
-                contactForm.reset();
-                submitBtn.innerText = originalText;
-                submitBtn.disabled = false;
-            }, 1500);
-        });
-    }
+  /* =========================
+     5) Contact form behavior
+  ========================== */
+  if (contactForm) {
+    contactForm.addEventListener('submit', function (event) {
+      event.preventDefault();
 
-    // --- 5. Active Link Highlighting on Scroll ---
-    const sections = document.querySelectorAll('section');
-    window.addEventListener('scroll', () => {
-        let current = '';
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.clientHeight;
-            if (pageYOffset >= (sectionTop - 150)) {
-                current = section.getAttribute('id');
-            }
-        });
+      const submitButton = contactForm.querySelector('.btn-submit');
+      const originalButtonText = submitButton.innerText;
 
-        navItems.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href').includes(current)) {
-                link.classList.add('active');
-            }
-        });
+      submitButton.innerText = 'Sending...';
+      submitButton.disabled = true;
+
+      setTimeout(function () {
+        const name = document.getElementById('name').value;
+        alert('Success! Thank you, ' + name + '. We have received your message and will contact you shortly.');
+
+        contactForm.reset();
+        submitButton.innerText = originalButtonText;
+        submitButton.disabled = false;
+      }, 1500);
     });
-
+  }
 });
