@@ -419,6 +419,7 @@ section {
   font-style: italic;
   color: var(--light-text);
   margin-bottom: 25px;
+  min-height: 170px;
 }
 
 .client-info {
@@ -642,6 +643,10 @@ section {
 
   .testimonial-card {
     flex: 1 1 100%;
+  }
+
+  .testimonial-card p {
+    min-height: auto;
   }
 }
 
