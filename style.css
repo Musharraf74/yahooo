@@ -429,6 +429,7 @@ section {
   margin-bottom: 2px;
   color: var(--primary-color);
   font-size: 1.1rem;
+  white-space: nowrap;
 }
 
 .client-info span {
